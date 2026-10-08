@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-rl-safety-demo"
+version = "0.1.0"
+description = "A zero-GPU demonstration of safe agent execution, sandbox isolation, failure recovery, and reward verification."
+requires-python = ">=3.10"
+authors = [{name = "Rong Mu"}]
+dependencies = []
+
+[project.scripts]
+agentic-rl-demo = "agentic_rl_demo.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["agentic_rl_demo*"]

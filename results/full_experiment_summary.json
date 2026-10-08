@@ -1,0 +1,12 @@
+{
+  "scope": "full_private_experiment",
+  "model": "Qwen3-8B",
+  "training": "eight-way online GRPO",
+  "stack": ["verl", "vLLM", "FSDP"],
+  "metrics": {
+    "held_out_task_success": {"before": 0.08, "after": 0.93},
+    "unauthorized_action_rate": {"before": 0.28, "after": 0.03}
+  },
+  "reproduced_by_public_demo": false,
+  "note": "Reported results from the full multi-GPU experiment. The public demo validates runtime and verifier behavior only."
+}
