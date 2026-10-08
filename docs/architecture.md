@@ -1,26 +1,30 @@
 # Architecture
 
-The demo isolates the four ideas that matter most in the full system: controlled execution, rollout-local state, auditable trajectories, and deterministic verification.
+The public repository isolates five ideas that matter most in the full system: controlled execution, rollout-local state, auditable trajectories, grounded verification, and reward-driven model updates.
 
 ```mermaid
 flowchart LR
-    A["Synthetic customer case"] --> B["Deterministic agent plan"]
-    B --> C["Safe runtime"]
-    C --> D["Tool registry"]
+    A["Synthetic customer case"] --> B["Model-generated candidates"]
+    B --> C["Protocol parser"]
+    C --> G["Safe runtime"]
+    G --> D["Tool registry"]
     D --> E["Read-only order and policy data"]
     D --> F["Rollout-scoped sandbox"]
-    C --> G["Executed trajectory"]
-    F --> G
-    G --> H["Rule-based verifier"]
+    G --> T["Auditable trajectory"]
+    F --> T
+    T --> H["Rule-based verifier"]
     H --> I["Subscores"]
     H --> J["Critical-error caps"]
     I --> K["Final reward"]
     J --> K
+    K --> L["Group-relative advantage"]
+    L --> M["TRL GRPO objective"]
+    M --> N["LoRA policy update"]
 ```
 
 ## Runtime boundary
 
-`run_scenario` accepts a validated synthetic case and executes its plan through a fixed tool registry. In the private training system, a model provider generates actions. The public demo uses deterministic actions so the execution and verification path runs without model weights, an API key, or a GPU.
+`run_scenario` accepts a validated synthetic case and executes its plan through a fixed tool registry. The zero-dependency quick start uses deterministic plans. The public training experiment instead parses model-generated `<tool_call>` blocks and sends the resulting plans through the same runtime boundary.
 
 ## Rollout isolation
 
@@ -56,3 +60,18 @@ final_reward = min(raw_reward, lowest_active_cap)
 ## Full training system boundary
 
 The full experiment used Qwen3-8B, asynchronous multi-turn rollouts, an LLM-assisted fact-grounded verifier, and online GRPO through verl, vLLM, and FSDP. Those components require a multi-GPU environment and are intentionally outside this portfolio demo.
+
+## Public training boundary
+
+`public_experiment/` uses 96 synthetic training cases and 24 held-out cases with unique order IDs. LoRA SFT first teaches the output protocol. TRL then samples four completions per prompt, calls the runtime-backed verifier as a custom reward function, and performs GRPO updates. The same held-out split is evaluated before SFT, after SFT, and after GRPO.
+
+This reproduction is deliberately smaller than the full system. It demonstrates online model generation and reward-driven updates without claiming production readiness or reproducing the Qwen3-8B metrics.
+
+## Training smoke boundary
+
+`training_smoke/` adds two optional checks using `Qwen/Qwen2.5-0.5B-Instruct` by default:
+
+1. **SFT:** applies the model chat template, masks all prompt tokens with `-100`, computes a causal-language-model loss on the assistant target, backpropagates, and performs an optimizer step.
+2. **Agentic RL:** executes a safe and unsafe replay for the same prompt, converts verifier rewards into group-relative advantages, computes a sequence-level clipped policy objective, backpropagates, and performs an optimizer step.
+
+The RL check is offline and intentionally small. It validates the reward-to-gradient interface, not online sampling quality, distributed rollout orchestration, reference-policy KL, or convergence. The full experiment remains the source of the reported evaluation numbers.

@@ -1,0 +1,7 @@
+{
+  "seed": 17,
+  "train_size": 96,
+  "heldout_size": 24,
+  "synthetic": true,
+  "split_policy": "unique order IDs; held-out records are excluded before serialization"
+}

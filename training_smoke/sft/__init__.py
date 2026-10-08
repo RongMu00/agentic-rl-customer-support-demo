@@ -1,0 +1,2 @@
+"""SFT smoke check."""
+
